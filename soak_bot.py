@@ -8,6 +8,7 @@ from flask import Flask, request
 import requests
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # Load environment variables from .env file
 load_dotenv()
@@ -15,6 +16,11 @@ load_dotenv()
 app = Flask(__name__)
 if not (BOT_TOKEN := os.environ.get("BOT_TOKEN")):
     raise ValueError("BOT_TOKEN environment variable is not set!")
+if not (OPENAI_API_KEY := os.environ.get("OPENAI_API_KEY")):
+    raise ValueError("OPENAI_API_KEY environment variable is not set!")
+
+API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
@@ -23,6 +29,46 @@ def send_message(chat_id, text):
     url = f"{API_URL}/sendMessage"
     payload = {"chat_id": chat_id, "text": text}
     requests.post(url, json=payload)
+
+
+def handle_natural_conversation(text):
+    """Handle natural language conversations using GPT"""
+    try:
+        # Create system prompt that defines the bot's role and knowledge
+        system_prompt = """You are a helpful T-shirt store assistant. You help customers find the perfect t-shirt.
+Available products:
+- Classic fit t-shirts (XS to 2XL)
+- Oversized t-shirts (S to XL)
+- Graphic print t-shirts (anime, minimalist designs)
+- Summer collection (breathable cotton)
+
+Key information:
+- Delivery: 3-5 business days (standard), 1-2 days (express)
+- Size guide available
+- Pan-India shipping
+- Returns accepted within 7 days
+
+Respond in a friendly, helpful manner. Focus on understanding the customer's needs and making relevant suggestions.
+Never mention Telegram commands (starting with /).
+Keep responses concise but informative."""
+
+        # Get GPT's response
+        response = client.chat.completions.create(
+            model="deepseek/deepseek-chat:free",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text}
+            ],
+            max_tokens=150,
+            temperature=0.7
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        print(f"Error generating GPT response: {str(e)}")
+        # Fallback response if GPT fails
+        return "I'm here to help you find the perfect t-shirt! Could you tell me what style you're looking for?"
 
 
 def setup_webhook(url):
@@ -72,18 +118,24 @@ def telegram_webhook():
         chat_id = data['message']['chat']['id']
         text = data['message'].get('text', '')
 
-        if text == '/start':
-            send_message(
-                chat_id, "👋 Welcome to our store! Use /browse or /offers to get started.")
-        elif text == '/browse':
-            send_message(
-                chat_id, "🛍️ Our store catalog is coming soon!")
-        elif text == '/offers':
-            send_message(
-                chat_id, "🏷️ No active offers at the moment. Check back later!")
+        # Handle commands
+        if text.startswith('/'):
+            if text == '/start':
+                send_message(
+                    chat_id, "👋 Welcome to our store! I'm here to help you find the perfect tee. What kind of style are you looking for?")
+            elif text == '/browse':
+                send_message(
+                    chat_id, "🛍️ Our store catalog is coming soon! Meanwhile, tell me what you're looking for and I'll help you find it!")
+            elif text == '/offers':
+                send_message(
+                    chat_id, "🏷️ No active offers at the moment, but I can help you find something that fits your style and budget! What are you looking for?")
+            else:
+                send_message(
+                    chat_id, "I'm better at natural conversation! Just tell me what kind of t-shirt you're looking for, and I'll help you find it. 😊")
         else:
-            send_message(
-                chat_id, "I don't understand that command. Try /start, /browse, or /offers")
+            # Handle natural conversation
+            response = handle_natural_conversation(text)
+            send_message(chat_id, response)
 
         return '', 200
     except Exception as e:
