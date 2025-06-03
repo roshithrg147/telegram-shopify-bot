@@ -25,6 +25,14 @@ def send_message(chat_id, text):
     requests.post(url, json=payload)
 
 
+def setup_webhook(url):
+    """Setup webhook for Telegram bot"""
+    webhook_url = f"{url}/{BOT_TOKEN}"
+    set_webhook_url = f"{API_URL}/setWebhook?url={webhook_url}"
+    response = requests.get(set_webhook_url)
+    return response.json()
+
+
 @app.route('/')
 def index():
     return "Bot is Live!!"
@@ -45,4 +53,7 @@ def telegram_webhook():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
+    # Set up webhook for production
+    webhook_url = "https://telegram-shopify-bot.onrender.com"
+    setup_webhook(webhook_url)
     app.run(host='0.0.0.0', port=port)
