@@ -7,10 +7,22 @@
 from flask import Flask, request
 import requests
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+if not (BOT_TOKEN := os.environ.get("BOT_TOKEN")):
+    raise ValueError("BOT_TOKEN environment variable is not set!")
+
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
+
+
+def send_message(chat_id, text):
+    url = f"{API_URL}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text}
+    requests.post(url, json=payload)
 
 
 @app.route('/')
@@ -30,10 +42,7 @@ def telegram_webhook():
 
         return '', 200
 
-    def send_message(chat_id, text):
-        url = f"{API_URL}/sendMessage"
-        payload = {"chat_id": chat_id, "text": text}
-        requests.post(url, json=payload)
 
-    if __name__ == '__main__':
-        app.run(debug=True)
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
