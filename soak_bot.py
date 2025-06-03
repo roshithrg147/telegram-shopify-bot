@@ -35,7 +35,10 @@ def setup_webhook(url):
 
 @app.route('/')
 def index():
-    return "Bot is Live!!"
+    # Check webhook info
+    webhook_info_url = f"{API_URL}/getWebhookInfo"
+    webhook_info = requests.get(webhook_info_url).json()
+    return f"Bot is Live! Webhook info: {webhook_info}"
 
 
 @app.route(f"/{BOT_TOKEN}", methods=['POST'])
