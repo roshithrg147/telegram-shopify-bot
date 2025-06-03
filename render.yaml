@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: telegram-shopify-bot
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python soak_bot.py"
+    envVars:
+      - key: BOT_TOKEN
+        value: "8084388479:AAH1E4jqafCZNDTxZ_QOWBMvoqaG_xgynW4"
+      - key: SHOPIFY_STORE_URL
+      #   value: "https://your-shop.myshopify.com"
+      # - key: SHOPIFY_ACCESS_TOKEN
+      #   value: "your-shopify-access-token"
