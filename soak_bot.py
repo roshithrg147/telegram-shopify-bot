@@ -43,15 +43,33 @@ def index():
 
 @app.route(f"/{BOT_TOKEN}", methods=['POST'])
 def telegram_webhook():
-    data = request.get_json()
-    chat_id = data['message']['chat']['id']
-    text = data['message'].get('text')
+    try:
+        data = request.get_json()
 
-    if text == '/start':
-        send_message(
-            chat_id, "👋 Welcome to our store! Use /browse or /offers to get started.")
+        # Handle different types of updates
+        if 'message' not in data:
+            return '', 200  # Acknowledge non-message updates
+
+        chat_id = data['message']['chat']['id']
+        text = data['message'].get('text', '')
+
+        if text == '/start':
+            send_message(
+                chat_id, "👋 Welcome to our store! Use /browse or /offers to get started.")
+        elif text == '/browse':
+            send_message(
+                chat_id, "🛍️ Our store catalog is coming soon!")
+        elif text == '/offers':
+            send_message(
+                chat_id, "🏷️ No active offers at the moment. Check back later!")
+        else:
+            send_message(
+                chat_id, "I don't understand that command. Try /start, /browse, or /offers")
 
         return '', 200
+    except Exception as e:
+        print(f"Error in webhook: {str(e)}")
+        return '', 200  # Always return 200 to Telegram
 
 
 if __name__ == '__main__':
