@@ -22,18 +22,15 @@ if not (OPENROUTER_API_KEY := os.environ.get("OPENROUTER_API_KEY")):
 
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
-# Initialize OpenAI client with custom httpx client
-http_client = httpx.Client(
-    base_url="https://openrouter.ai/api/v1",
-    follow_redirects=True
-)
-
+# Initialize OpenAI client for OpenRouter
 client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
-    http_client=http_client
+    default_headers={
+        "HTTP-Referer": "https://telegram-shopify-bot.onrender.com",
+        "X-Title": "T-Shirt Store Bot"
+    }
 )
-
-API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 
 def send_message(chat_id, text):
@@ -65,11 +62,7 @@ Keep responses concise but informative."""
 
         # Get GPT's response
         response = client.chat.completions.create(
-            extra_headers={
-                "HTTP-Referer": "https://telegram-shopify-bot.onrender.com",
-                "X-Title": "T-Shirt Store Bot"
-            },
-            model="anthropic/claude-2",  # Using Claude for natural conversations
+            model="mistralai/mistral-7b-instruct",  # Using Mistral for better performance
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": text}
