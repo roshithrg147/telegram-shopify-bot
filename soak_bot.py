@@ -9,6 +9,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+import httpx
 
 # Load environment variables from .env file
 load_dotenv()
@@ -20,9 +21,16 @@ if not (OPENROUTER_API_KEY := os.environ.get("OPENROUTER_API_KEY")):
     raise ValueError("OPENROUTER_API_KEY environment variable is not set!")
 
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
-client = OpenAI(
+
+# Initialize OpenAI client with custom httpx client
+http_client = httpx.Client(
     base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY
+    follow_redirects=True
+)
+
+client = OpenAI(
+    api_key=OPENROUTER_API_KEY,
+    http_client=http_client
 )
 
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
