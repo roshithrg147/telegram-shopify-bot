@@ -16,11 +16,14 @@ load_dotenv()
 app = Flask(__name__)
 if not (BOT_TOKEN := os.environ.get("BOT_TOKEN")):
     raise ValueError("BOT_TOKEN environment variable is not set!")
-if not (OPENAI_API_KEY := os.environ.get("OPENAI_API_KEY")):
-    raise ValueError("OPENAI_API_KEY environment variable is not set!")
+if not (OPENROUTER_API_KEY := os.environ.get("OPENROUTER_API_KEY")):
+    raise ValueError("OPENROUTER_API_KEY environment variable is not set!")
 
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=OPENROUTER_API_KEY
+)
 
 API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
@@ -54,7 +57,11 @@ Keep responses concise but informative."""
 
         # Get GPT's response
         response = client.chat.completions.create(
-            model="deepseek/deepseek-chat:free",
+            extra_headers={
+                "HTTP-Referer": "https://telegram-shopify-bot.onrender.com",
+                "X-Title": "T-Shirt Store Bot"
+            },
+            model="anthropic/claude-2",  # Using Claude for natural conversations
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": text}
